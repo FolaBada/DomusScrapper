@@ -1,0 +1,128 @@
+﻿[
+  {
+    "sport": "americanfootball",
+    "Teams": "Miami Dolphins vs Baltimora Ravens",
+    "Bookmaker": "Domusbet",
+    "Odds": {
+      "1": 3.9,
+      "2": 1.24
+    }
+  },
+  {
+    "sport": "americanfootball",
+    "Teams": "Cincinnati Bengals vs Chicago Bears",
+    "Bookmaker": "Domusbet",
+    "Odds": {
+      "1": 2.2,
+      "2": 1.65
+    }
+  },
+  {
+    "sport": "americanfootball",
+    "Teams": "New England Patriots vs Atlanta Falcons",
+    "Bookmaker": "Domusbet",
+    "Odds": {
+      "1": 1.37,
+      "2": 3
+    }
+  },
+  {
+    "sport": "americanfootball",
+    "Teams": "Detroit Lions vs Minnesota Vikings",
+    "Bookmaker": "Domusbet",
+    "Odds": {
+      "1": 1.18,
+      "2": 4.7
+    }
+  },
+  {
+    "sport": "americanfootball",
+    "Teams": "New York Giants vs San Francisco 49ers",
+    "Bookmaker": "Domusbet",
+    "Odds": {
+      "1": 2.2,
+      "2": 1.65
+    }
+  },
+  {
+    "sport": "americanfootball",
+    "Teams": "Houston Texans vs Denver Broncos",
+    "Bookmaker": "Domusbet",
+    "Odds": {
+      "1": 1.77,
+      "2": 2.02
+    }
+  },
+  {
+    "sport": "americanfootball",
+    "Teams": "Tennessee Titans vs Los Angeles Chargers",
+    "Bookmaker": "Domusbet",
+    "Odds": {
+      "1": 4.3,
+      "2": 1.21
+    }
+  },
+  {
+    "sport": "americanfootball",
+    "Teams": "Green Bay Packers vs Carolina Panthers",
+    "Bookmaker": "Domusbet",
+    "Odds": {
+      "1": 1.1,
+      "2": 6.8
+    }
+  },
+  {
+    "sport": "americanfootball",
+    "Teams": "Pittsburgh Steelers vs Indianapolis Colts",
+    "Bookmaker": "Domusbet",
+    "Odds": {
+      "1": 2.35,
+      "2": 1.58
+    }
+  },
+  {
+    "sport": "americanfootball",
+    "Teams": "Las Vegas Raiders vs Jacksonville Jaguars",
+    "Bookmaker": "Domusbet",
+    "Odds": {
+      "1": 2.28,
+      "2": 1.61
+    }
+  },
+  {
+    "sport": "americanfootball",
+    "Teams": "Los Angeles Rams vs New Orleans Saints",
+    "Bookmaker": "Domusbet",
+    "Odds": {
+      "1": 1.08,
+      "2": 7.4
+    }
+  },
+  {
+    "sport": "americanfootball",
+    "Teams": "Buffalo Bills vs Kansas City Chiefs",
+    "Bookmaker": "Domusbet",
+    "Odds": {
+      "1": 2.06,
+      "2": 1.74
+    }
+  },
+  {
+    "sport": "americanfootball",
+    "Teams": "Washington Commanders vs Seattle Seahawks",
+    "Bookmaker": "Domusbet",
+    "Odds": {
+      "1": 2.32,
+      "2": 1.59
+    }
+  },
+  {
+    "sport": "americanfootball",
+    "Teams": "Dallas Cowboys vs Arizona Cardinals",
+    "Bookmaker": "Domusbet",
+    "Odds": {
+      "1": 1.65,
+      "2": 2.2
+    }
+  }
+]

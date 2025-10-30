@@ -1,0 +1,20 @@
+﻿[
+  {
+    "sport": "americanfootball",
+    "Teams": "Montreal Alouettes vs Winnipeg Blue Bombers",
+    "Bookmaker": "Domusbet",
+    "Odds": {
+      "1": 1.38,
+      "2": 2.9
+    }
+  },
+  {
+    "sport": "americanfootball",
+    "Teams": "British Columbia Lions vs Calgary Stampeders",
+    "Bookmaker": "Domusbet",
+    "Odds": {
+      "1": 1.36,
+      "2": 3
+    }
+  }
+]
