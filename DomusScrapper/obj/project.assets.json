@@ -684,19 +684,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\User2\\.nuget\\packages\\": {}
+    "C:\\Users\\vinci\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\User2\\Desktop\\DomusScrapper\\DomusScrapper\\DomusScrapper.csproj",
+      "projectUniqueName": "C:\\Development\\DomusScrapper\\DomusScrapper\\DomusScrapper.csproj",
       "projectName": "DomusScrapper",
-      "projectPath": "C:\\Users\\User2\\Desktop\\DomusScrapper\\DomusScrapper\\DomusScrapper.csproj",
-      "packagesPath": "C:\\Users\\User2\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\User2\\Desktop\\DomusScrapper\\DomusScrapper\\obj\\",
+      "projectPath": "C:\\Development\\DomusScrapper\\DomusScrapper\\DomusScrapper.csproj",
+      "packagesPath": "C:\\Users\\vinci\\.nuget\\packages\\",
+      "outputPath": "C:\\Development\\DomusScrapper\\DomusScrapper\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\User2\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\vinci\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -750,7 +750,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.412/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.415/PortableRuntimeIdentifierGraph.json"
       }
     }
   },

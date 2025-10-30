@@ -12,8 +12,8 @@ namespace DomusScrapper
         // Choose your default rotation order here
         private static readonly string[] DefaultSports = new[]
         {
-            "Calcio", "Pallacanestro", "Tennis", "Rugby",
-            "american-football", "baseball", "ice-hockey"
+          "Calcio", "Pallacanestro", "Tennis", "Rugby",
+           "baseball","Football Americano", "ice-hockey" 
         };
 
         public static async Task Main(string[] args)
@@ -29,9 +29,7 @@ namespace DomusScrapper
             using var cts = new CancellationTokenSource();
             Console.CancelKeyPress += (s, e) =>
             {
-                e.Cancel = true;
-                cts.Cancel();
-                Console.WriteLine("\nStopping after current task...");
+                   Environment.Exit(130);
             };
 
             using var playwright = await Playwright.CreateAsync();

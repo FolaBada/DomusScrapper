@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DomusScrapper")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+498662e6a3e15938206d6371d41f4161d616401f")]
 [assembly: System.Reflection.AssemblyProductAttribute("DomusScrapper")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DomusScrapper")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

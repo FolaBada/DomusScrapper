@@ -75,7 +75,7 @@ namespace DomusScrapper
         public static async Task RunAsync(string? startSport = null)
         {
             Console.WriteLine("Launching browser...");
-
+            
             var playwright = await Playwright.CreateAsync();
             var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
             {
@@ -117,6 +117,12 @@ namespace DomusScrapper
                 if (wanted.Equals("Soccer", StringComparison.OrdinalIgnoreCase) ||
                     wanted.Equals("Football", StringComparison.OrdinalIgnoreCase))
                     wanted = "Calcio";
+                    // American Football aliases → Domusbet label
+                else if (wanted.Equals("American Football", StringComparison.OrdinalIgnoreCase) ||
+                    wanted.Equals("NFL", StringComparison.OrdinalIgnoreCase) ||
+                    wanted.Equals("Football Americano", StringComparison.OrdinalIgnoreCase))
+                    wanted = "Football Americano";
+
                 else if (wanted.Equals("Basketball", StringComparison.OrdinalIgnoreCase))
                     wanted = "Pallacanestro"; // some pages might show "Basket" — we handle both below
 
@@ -154,6 +160,10 @@ namespace DomusScrapper
                 Console.WriteLine($"\n=== Processing sport: {sport} ===");
 
                 await ClickSportSection(page, sport);
+                // Focus navigation on American Football only
+if (!sport.Equals("Football Americano", StringComparison.OrdinalIgnoreCase))
+    continue;
+
                 await HandleRandomPopup(page);
 
                 var leagues = await GetLeaguesForSport(page);
@@ -217,27 +227,46 @@ public static async Task RunSinglePageAsync(IPage page, string? startSport = nul
     var sports = await GetSports(page);
 
     // Optional startSport narrowing (same logic you already had)
-    if (!string.IsNullOrWhiteSpace(startSport))
+ // Optional startSport narrowing (only if provided)
+if (!string.IsNullOrWhiteSpace(startSport))
+{
+    string wanted = startSport.Trim();
+    if (wanted.Equals("American Football", StringComparison.OrdinalIgnoreCase) ||
+        wanted.Equals("NFL", StringComparison.OrdinalIgnoreCase) ||
+        wanted.Equals("Football Americano", StringComparison.OrdinalIgnoreCase))
     {
-        string wanted = startSport.Trim();
-        if (wanted.Equals("Soccer", StringComparison.OrdinalIgnoreCase) || wanted.Equals("Football", StringComparison.OrdinalIgnoreCase))
-            wanted = "Calcio";
-        else if (wanted.Equals("Basketball", StringComparison.OrdinalIgnoreCase))
-            wanted = "Pallacanestro";
-
-        var filtered = sports.Where(s => s.Equals(wanted, StringComparison.OrdinalIgnoreCase)).ToList();
-        if (filtered.Count == 0 && wanted.Equals("Pallacanestro", StringComparison.OrdinalIgnoreCase))
-            filtered = sports.Where(s => s.Equals("Basket", StringComparison.OrdinalIgnoreCase) || s.Equals("Pallacanestro", StringComparison.OrdinalIgnoreCase)).ToList();
-        if (filtered.Count == 0)
-            filtered = sports.Where(s => s.IndexOf(wanted, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
-
-        if (filtered.Count == 0)
-        {
-            Console.WriteLine($"⚠ '{startSport}' not found. Available: {string.Join(", ", sports)}");
-            return;
-        }
-        sports = filtered;
+        wanted = "Football Americano";
     }
+    else if (wanted.Equals("Soccer", StringComparison.OrdinalIgnoreCase) ||
+             wanted.Equals("Football", StringComparison.OrdinalIgnoreCase))
+    {
+        wanted = "Calcio";
+    }
+    else if (wanted.Equals("Basketball", StringComparison.OrdinalIgnoreCase))
+    {
+        wanted = "Pallacanestro";
+    }
+
+    var filtered = sports.Where(s => s.Equals(wanted, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    // small fallback: allow matching "Basket" vs "Pallacanestro"
+    if (filtered.Count == 0 && wanted.Equals("Pallacanestro", StringComparison.OrdinalIgnoreCase))
+        filtered = sports.Where(s => s.Equals("Basket", StringComparison.OrdinalIgnoreCase) ||
+                                     s.Equals("Pallacanestro", StringComparison.OrdinalIgnoreCase)).ToList();
+
+    // soft contains last resort
+    if (filtered.Count == 0)
+        filtered = sports.Where(s => s.IndexOf(wanted, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+
+    if (filtered.Count == 0)
+    {
+        Console.WriteLine($"⚠ '{startSport}' not found. Available: {string.Join(", ", sports)}");
+        return;
+    }
+
+    sports = filtered;
+}
+
 
     if (sports.Count == 0)
     {
@@ -249,6 +278,10 @@ public static async Task RunSinglePageAsync(IPage page, string? startSport = nul
     {
         Console.WriteLine($"\n=== Processing sport: {sport} ===");
         await ClickSportSection(page, sport);
+        // Focus navigation on American Football only
+if (!sport.Equals("Football Americano", StringComparison.OrdinalIgnoreCase))
+    continue;
+
         await HandleRandomPopup(page);
 
         var leagues = await GetLeaguesForSport(page);
@@ -754,101 +787,87 @@ if (!lists.length) return '[]';
 
 
         // Build EXACT Eurobet master payload shape for Domus data
-        private static Dictionary<string, object> BuildClientPayload(
-            string teams,
-            bool isSoccer, bool isBasket, bool isTennis,
-            Dictionary<string, string> baseOdds,                                   // e.g. "1","X","2","GOAL","NOGOAL", etc. (strings)
-            Dictionary<string, Dictionary<string, string>> ouTotals,               // line -> { "UNDER": "...", "OVER": "..." }
-            Dictionary<string, Dictionary<string, string>> oneTwoHandicapLines     // line -> { "1": "...", "2": "..." }
-        )
+        // Build EXACT Eurobet master payload shape for Domus data (explicit sport label)
+private static Dictionary<string, object> BuildClientPayload(
+    string teams,
+    string sportLabel, // e.g. "americanfootball"
+    bool isSoccer,     // only used to decide Handicap removal behavior
+    Dictionary<string, string> baseOdds,                                   // "1","X","2", etc.
+    Dictionary<string, Dictionary<string, string>> ouTotals,               // line -> { "UNDER": "...", "OVER": "..." }
+    Dictionary<string, Dictionary<string, string>> oneTwoHandicapLines     // line -> { "1": "...", "2": "..." }
+)
+{
+    var odds = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
+    // Soccer has 1/X/2 + GG/NG; others have 1/2
+    if (baseOdds != null)
+    {
+        if (isSoccer)
         {
-            // Decide sport label exactly like Eurobet
-            string sport = isBasket ? "basket" : isTennis ? "tennis" : "soccer";
-
-            // Common odds container we’ll serialize into "Odds"
-            var odds = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-
-            // ---- 1X / X / 2 (soccer) or 1/2 (basket/tennis) ----
-            // numeric conversion from string
-            if (baseOdds != null)
-            {
-                if (isSoccer)
-                {
-                    if (baseOdds.TryGetValue("1", out var s1) && TryParseDoubleLoose(s1) is double d1) odds["1"] = d1;
-                    if (baseOdds.TryGetValue("X", out var sx) && TryParseDoubleLoose(sx) is double dx) odds["X"] = dx;
-                    if (baseOdds.TryGetValue("2", out var s2) && TryParseDoubleLoose(s2) is double d2) odds["2"] = d2;
-
-                    // GG/NG aliases (you already map GOL→GOAL,NOGOL→NOGOAL upstream)
-                    if (baseOdds.TryGetValue("GOAL", out var sgg) && TryParseDoubleLoose(sgg) is double dgg) odds["GG"] = dgg;
-                    if (baseOdds.TryGetValue("NOGOAL", out var sng) && TryParseDoubleLoose(sng) is double dng) odds["NG"] = dng;
-                }
-                else
-                {
-                    if (baseOdds.TryGetValue("1", out var s1) && TryParseDoubleLoose(s1) is double d1) odds["1"] = d1;
-                    if (baseOdds.TryGetValue("2", out var s2) && TryParseDoubleLoose(s2) is double d2) odds["2"] = d2;
-                    // (no "X" for basket/tennis in Eurobet master)
-                }
-            }
-
-            // ---- O/U nested: "O/U": { "2.5": { "U": 1.85, "O": 1.95 }, ... } ----
-            if (ouTotals != null && ouTotals.Count > 0)
-            {
-                var ouDict = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                foreach (var (lineRaw, sides) in ouTotals)
-                {
-                    var lineKey = ExtractNumericKey(lineRaw, allowSign: false);
-                    if (string.IsNullOrEmpty(lineKey)) continue;
-
-                    sides.TryGetValue("UNDER", out var uStr);
-                    sides.TryGetValue("OVER", out var oStr);
-
-                    var u = TryParseDoubleLoose(uStr);
-                    var o = TryParseDoubleLoose(oStr);
-
-                    if (u.HasValue || o.HasValue)
-                    {
-                        ouDict[lineKey] = new Dictionary<string, double?> {
-                    { "U", u }, { "O", o }
-                };
-                    }
-                }
-                if (ouDict.Count > 0) odds["O/U"] = ouDict;
-            }
-
-            // ---- Handicap (basket/tennis only): "1 2 + Handicap": { "+3.5": { "1": 1.90, "2": 1.90 }, ... } ----
-            if (!isSoccer && oneTwoHandicapLines != null && oneTwoHandicapLines.Count > 0)
-            {
-                var hcap = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                foreach (var (lineRaw, sides) in oneTwoHandicapLines)
-                {
-                    var lineKey = ExtractNumericKey(lineRaw, allowSign: true);
-                    if (string.IsNullOrEmpty(lineKey)) continue;
-
-                    sides.TryGetValue("1", out var s1);
-                    sides.TryGetValue("2", out var s2);
-
-                    var v1 = TryParseDoubleLoose(s1);
-                    var v2 = TryParseDoubleLoose(s2);
-
-                    if (v1.HasValue || v2.HasValue)
-                    {
-                        hcap[lineKey] = new Dictionary<string, double?> {
-                    { "1", v1 }, { "2", v2 }
-                };
-                    }
-                }
-                if (hcap.Count > 0) odds["1 2 + Handicap"] = hcap;
-            }
-
-            // Assemble Eurobet master object (with Bookmaker overridden to Domusbet)
-            return new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["sport"] = sport,
-                ["Teams"] = teams,
-                ["Bookmaker"] = "Domusbet",
-                ["Odds"] = odds
-            };
+            if (baseOdds.TryGetValue("1", out var s1) && TryParseDoubleLoose(s1) is double d1) odds["1"] = d1;
+            if (baseOdds.TryGetValue("X", out var sx) && TryParseDoubleLoose(sx) is double dx) odds["X"] = dx;
+            if (baseOdds.TryGetValue("2", out var s2) && TryParseDoubleLoose(s2) is double d2) odds["2"] = d2;
+            if (baseOdds.TryGetValue("GOAL", out var sgg) && TryParseDoubleLoose(sgg) is double dgg) odds["GG"] = dgg;
+            if (baseOdds.TryGetValue("NOGOAL", out var sng) && TryParseDoubleLoose(sng) is double dng) odds["NG"] = dng;
         }
+        else
+        {
+            if (baseOdds.TryGetValue("1", out var s1) && TryParseDoubleLoose(s1) is double d1) odds["1"] = d1;
+            if (baseOdds.TryGetValue("2", out var s2) && TryParseDoubleLoose(s2) is double d2) odds["2"] = d2;
+        }
+    }
+
+    // O/U
+    if (ouTotals != null && ouTotals.Count > 0)
+    {
+        var ouDict = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (lineRaw, sides) in ouTotals)
+        {
+            var lineKey = ExtractNumericKey(lineRaw, allowSign: false);
+            if (string.IsNullOrEmpty(lineKey)) continue;
+
+            sides.TryGetValue("UNDER", out var uStr);
+            sides.TryGetValue("OVER", out var oStr);
+
+            var u = TryParseDoubleLoose(uStr);
+            var o = TryParseDoubleLoose(oStr);
+
+            if (u.HasValue || o.HasValue)
+                ouDict[lineKey] = new Dictionary<string, double?> { { "U", u }, { "O", o } };
+        }
+        if (ouDict.Count > 0) odds["O/U"] = ouDict;
+    }
+
+    // Handicap (keep for non-soccer, i.e., keep for American Football)
+    if (!isSoccer && oneTwoHandicapLines != null && oneTwoHandicapLines.Count > 0)
+    {
+        var hcap = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (lineRaw, sides) in oneTwoHandicapLines)
+        {
+            var lineKey = ExtractNumericKey(lineRaw, allowSign: true);
+            if (string.IsNullOrEmpty(lineKey)) continue;
+
+            sides.TryGetValue("1", out var s1);
+            sides.TryGetValue("2", out var s2);
+
+            var v1 = TryParseDoubleLoose(s1);
+            var v2 = TryParseDoubleLoose(s2);
+
+            if (v1.HasValue || v2.HasValue)
+                hcap[lineKey] = new Dictionary<string, double?> { { "1", v1 }, { "2", v2 } };
+        }
+        if (hcap.Count > 0) odds["1 2 + Handicap"] = hcap;
+    }
+
+    return new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["sport"] = sportLabel,   // <-- will be "americanfootball"
+        ["Teams"] = teams,
+        ["Bookmaker"] = "Domusbet",
+        ["Odds"] = odds
+    };
+}
+
 
 
 
@@ -860,7 +879,7 @@ if (!lists.length) return '[]';
             var matchContainers = page.Locator(".tabellaQuoteSquadre");
             int matchCount = await matchContainers.CountAsync();
             Console.WriteLine("Fixtures loading...");
-
+    
             int validMatchCount = 0;
 
             const int DROPDOWN_WAIT_MS = 350;
@@ -1314,41 +1333,38 @@ bool doBasketExtractions  = isBasket;
             }
 
             Console.WriteLine($"\n Fixtures loaded: {validMatchCount} matches found.");
-            Console.WriteLine($"\n Fixtures loaded: {validMatchCount} matches found.");
 
             // === JSON with custom keys: "O/U" and "TT + handicap" ===
             // === Eurobet-identical master JSON ===
             var eurobetShape = new List<Dictionary<string, object>>();
 
             foreach (var m in matchesList)
-            {
-                // sport detection based on your existing flags from fileName
-                bool isSoccer = fileName.Contains("Calcio", StringComparison.OrdinalIgnoreCase)
-                             || fileName.Contains("Soccer", StringComparison.OrdinalIgnoreCase)
-                             || fileName.Contains("Football", StringComparison.OrdinalIgnoreCase);
+{
+    // Only emit American Football
+    bool isAmericanFootball =
+        fileName.Contains("Football Americano", StringComparison.OrdinalIgnoreCase) ||
+        fileName.Contains("American Football", StringComparison.OrdinalIgnoreCase) ||
+        fileName.Contains("NFL", StringComparison.OrdinalIgnoreCase);
 
-                bool isBasket = fileName.Contains("Pallacanestro", StringComparison.OrdinalIgnoreCase)
-                             || fileName.Contains("Basket", StringComparison.OrdinalIgnoreCase);
+    if (!isAmericanFootball)
+        continue; // skip any non-AF page data
 
-                bool isTennis = fileName.Contains("Tennis", StringComparison.OrdinalIgnoreCase);
+    // AF payload: keep Handicap + O/U and set the correct sport label
+    string sportLabel = "americanfootball";
+    bool isSoccer = false; // ensures handicap is KEPT
 
-                // Build exact Eurobet master object
-                var payloadObj = BuildClientPayload(
-                    teams: m.Teams,
-                    isSoccer: isSoccer,
-                    isBasket: isBasket,
-                    isTennis: isTennis,
-                    baseOdds: m.Odds ?? new Dictionary<string, string>(),
-                    ouTotals: m.OUTotals ?? new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase),
-                    oneTwoHandicapLines: m.TTPlusHandicap ?? new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
-                );
+    var payloadObj = BuildClientPayload(
+        teams: m.Teams,
+        sportLabel: sportLabel,
+        isSoccer: isSoccer,
+        baseOdds: m.Odds ?? new Dictionary<string, string>(),
+        ouTotals: m.OUTotals ?? new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase),
+        oneTwoHandicapLines: m.TTPlusHandicap ?? new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
+    );
 
-                // ⚠ For soccer, DO NOT include handicap even if parsed (Eurobet master keeps it only for basket/tennis)
-                if (isSoccer && ((Dictionary<string, object>)payloadObj["Odds"]).ContainsKey("1 2 + Handicap"))
-                    ((Dictionary<string, object>)payloadObj["Odds"]).Remove("1 2 + Handicap");
+    eurobetShape.Add(payloadObj);
+}
 
-                eurobetShape.Add(payloadObj);
-            }
 
             // === POST to DB (Eurobet-shaped payloads) ===
             int posted = 0, failed = 0;
